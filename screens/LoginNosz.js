@@ -9,6 +9,7 @@ import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from 'expo-web-browser';
 import { auth } from "../firebaseConfig";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -16,11 +17,19 @@ const app = initializeApp(firebaseConfig);
 
 export default function Login({ navigation }) {
 
+
+  GoogleSignin.configure({
+    webClientId: 'client_secret_304409954868-ua6gaf1818d1oj4hr1rogqdbeefmcakf.apps.googleusercontent.com',
+  });
+
   React.useEffect(() => {
-    if (response?.type == "success"){
-      const { id_token } = response.params;
-      const credential = GoogleAuthProvider.credential(id_token);
-      signInWithCredentials(auth, credential);
+
+    async function onGoogleButtonPress() {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const { idToken } = await GoogleSignin.signIn();
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+      return auth().signInWithCredential(googleCredential);
+    
     }
 
   }, [response]);
@@ -56,10 +65,6 @@ export default function Login({ navigation }) {
     }
   };
 
-  const [userInfo, setUserInfo] = React.useState();
-  const [request, response, prompAsync] = Google.useAuthRequest({
-    androidClientId: "client_secret_304409954868-ua6gaf1818d1oj4hr1rogqdbeefmcakf.apps.googleusercontent.com"
-  });
 
 
 
@@ -116,7 +121,7 @@ export default function Login({ navigation }) {
           <Text style={styles.linkCadastro}>Ou ainda não é cadastrado?</Text>
           </TouchableOpacity>
           <View style={styles.vbGoogle}>
-            <LoginGoogle promptAsync={prompAsync}></LoginGoogle>
+            <LoginGoogle onPress={ onGoogleButtonPress()}></LoginGoogle>
           </View>
           <View style={styles.circulo2}></View>
         </View>
